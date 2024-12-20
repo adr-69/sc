@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Random Play</title>
+  <style>
+    /* Existing CSS styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      animation: fadeInDown 1.5s ease;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    #songTitle {
+      font-size: 1.5rem;
+      margin: 10px 0;
+      color: #ffde59;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+      animation: fadeInUp 1.5s ease;
+    }
+    #upload {
+      margin: 20px 0;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid #fff;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      cursor: pointer;
+    }
+    button {
+      padding: 12px 35px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(45deg, #ff6a00, #ee0979);
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      margin: 5px;
+    }
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    #songList {
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      border-radius: 10px;
+      width: 80%;
+    }
+    #songList ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #songList li {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      color: #ffde59;
+    }
+    #songList li:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>Music Random Play</h1>
+  <p id="songTitle">PLAYING SONG: No song playing</p>
+  <input type="file" id="upload" multiple accept="audio/*">
+  <div>
+    <button id="previousButton">Previous</button>
+    <button id="playButton">Play Random</button>
+    <button id="nextButton">Next</button>
+    <button id="saveButton">Save</button>
+  </div>
+  <div id="volumeControl">
+    <label id="volumeLabel" for="volumeSlider">Volume:</label>
+    <input type="range" id="volumeSlider" min="0" max="2" step="0.1" value="1">
+  </div>
+  <audio id="audioPlayer" controls></audio>
+  <div id="songList">
+    <ul id="playlist"></ul>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('upload');
+    const playButton = document.getElementById('playButton');
+    const nextButton = document.getElementById('nextButton');
+    const previousButton = document.getElementById('previousButton');
+    const saveButton = document.getElementById('saveButton');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const songTitle = document.getElementById('songTitle');
+    const playlist = document.getElementById('playlist');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+    let audioFiles = [];
+    let currentIndex = -1;
+
+    fileInput.addEventListener('change', (event) => {
+      audioFiles = Array.from(event.target.files);
+      updatePlaylist();
+      alert(`${audioFiles.length} file(s) loaded!`);
+    });
+
+    const updatePlaylist = () => {
+      playlist.innerHTML = ''; // Clear the playlist
+      audioFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.textContent = file.name;
+        li.addEventListener('click', () => playSong(index));
+        playlist.appendChild(li);
+      });
+    };
+
+    const playSong = (index) => {
+      if (audioFiles.length === 0) {
+        alert('Please upload audio files first!');
+        return;
+      }
+
+      currentIndex = index;
+      const file = audioFiles[currentIndex];
+      const objectUrl = URL.createObjectURL(file);
+      audioPlayer.src = objectUrl;
+      audioPlayer.play();
+      songTitle.textContent = `PLAYING SONG: ${file.name}`;
+    };
+
+    playButton.addEventListener('click', () => {
+      const randomIndex = Math.floor(Math.random() * audioFiles.length);
+      playSong(randomIndex);
+    });
+
+    nextButton.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % audioFiles.length;
+      playSong(currentIndex);
+    });
+
+    previousButton.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + audioFiles.length) % audioFiles.length;
+      playSong(currentIndex);
+    });
+
+    saveButton.addEventListener('click', () => {
+      if (audioFiles.length === 0 || currentIndex === -1) {
+        alert('No song to save!');
+        return;
+      }
+      localStorage.setItem('savedSongIndex', currentIndex);
+      alert('Song saved!');
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      audioPlayer.volume = volumeSlider.value;
+    });
+  </script>
+</body>
+</html>
