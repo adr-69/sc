@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Random Play</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      animation: fadeInDown 1.5s ease;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    #songTitle {
+      font-size: 1.5rem;
+      margin: 10px 0;
+      color: #ffde59;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+      animation: fadeInUp 1.5s ease;
+    }
+    #upload {
+      margin: 20px 0;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid #fff;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      cursor: pointer;
+    }
+    button {
+      padding: 12px 35px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(45deg, #ff6a00, #ee0979);
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      margin: 5px;
+    }
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    #volumeControl {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+    }
+    #volumeLabel {
+      margin-right: 10px;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 200px;
+      height: 5px;
+      background: #fff;
+      border-radius: 5px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(45deg, #ff6a00, #ee0979);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    audio {
+      margin-top: 20px;
+      width: 90%;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      animation: fadeInUp 1.5s ease;
+    }
+    .bubble {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      animation: float 8s infinite ease-in-out;
+    }
+    .bubble:nth-child(1) {
+      top: 10%;
+      left: 15%;
+      animation-duration: 10s;
+    }
+    .bubble:nth-child(2) {
+      top: 40%;
+      left: 70%;
+      animation-duration: 12s;
+      animation-delay: -3s;
+    }
+    .bubble:nth-child(3) {
+      top: 80%;
+      left: 30%;
+      animation-duration: 15s;
+      animation-delay: -5s;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Music Random Play</h1>
+  <p id="songTitle">PLAYING SONG: No song playing</p>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <input type="file" id="upload" multiple accept="audio/*">
+  <br>
+  <div>
+    <button id="previousButton">Previous</button>
+    <button id="playButton">Play Random</button>
+    <button id="nextButton">Next</button>
+    <button id="saveButton">Save</button>
+  </div>
+  <div id="volumeControl">
+    <label id="volumeLabel" for="volumeSlider">Volume:</label>
+    <input type="range" id="volumeSlider" min="0" max="2" step="0.1" value="1">
+  </div>
+  <audio id="audioPlayer" controls></audio>
+
+  <script>
+    const fileInput = document.getElementById('upload');
+    const playButton = document.getElementById('playButton');
+    const nextButton = document.getElementById('nextButton');
+    const previousButton = document.getElementById('previousButton');
+    const saveButton = document.getElementById('saveButton');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const songTitle = document.getElementById('songTitle');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+    let audioFiles = [];
+    let currentIndex = -1;
+
+    // Check if there is saved song in localStorage
+    window.onload = () => {
+      const savedSongIndex = localStorage.getItem('savedSongIndex');
+      if (savedSongIndex !== null) {
+        currentIndex = parseInt(savedSongIndex);
+        if (audioFiles.length > 0) {
+          playSong(currentIndex);
+        }
+      }
+    };
+
+    fileInput.addEventListener('change', (event) => {
+      audioFiles = Array.from(event.target.files);
+      if (audioFiles.length > 0) {
+        alert(`${audioFiles.length} file(s) loaded!`);
+      }
+    });
+
+    const playSong = (index) => {
+      if (audioFiles.length === 0) {
+        alert('Please upload audio files first!');
+        return;
+      }
+
+      currentIndex = index;
+      const file = audioFiles[currentIndex];
+
+      // Create an object URL and play it
+      const objectUrl = URL.createObjectURL(file);
+      audioPlayer.src = objectUrl;
+      audioPlayer.play();
+
+      // Display the file name
+      songTitle.textContent = `PLAYING SONG: ${file.name}`;
+    };
+
+    playButton.addEventListener('click', () => {
+      const randomIndex = Math.floor(Math.random() * audioFiles.length);
+      playSong(randomIndex);
+    });
+
+    nextButton.addEventListener('click', () => {
+      if (audioFiles.length === 0) {
+        alert('Please upload audio files first!');
+        return;
+      }
+
+      currentIndex = (currentIndex + 1) % audioFiles.length;
+      playSong(currentIndex);
+    });
+
+    previousButton.addEventListener('click', () => {
+      if (audioFiles.length === 0) {
+        alert('Please upload audio files first!');
+        return;
+      }
+
+      currentIndex = (currentIndex - 1 + audioFiles.length) % audioFiles.length;
+      playSong(currentIndex);
+    });
+
+    saveButton.addEventListener('click', () => {
+      if (audioFiles.length === 0 || currentIndex === -1) {
+        alert('No song to save!');
+        return;
+      }
+
+      // Save the current song index in localStorage
+      localStorage.setItem('savedSongIndex', currentIndex);
+      alert('Song saved!');
+    });
+
+    // Automatically play the next song when the current song ends
+    audioPlayer.addEventListener('ended', () => {
+      if (audioFiles.length > 0) {
+        currentIndex = (currentIndex + 1) % audioFiles.length;
+        playSong(currentIndex);
+      }
+    });
+
+    // Update audio volume based on slider value
+    volumeSlider.addEventListener('input', () => {
+      audioPlayer.volume = volumeSlider.value;
+    });
+  </script>
+</body>
+</html>
